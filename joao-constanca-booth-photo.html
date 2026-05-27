@@ -149,18 +149,23 @@
     background-image: radial-gradient(circle at 30% 30%, rgba(90,107,74,0.05) 0%, transparent 50%),
       radial-gradient(circle at 70% 70%, rgba(90,107,74,0.07) 0%, transparent 50%); }
   .strip-content { position:relative; z-index:1; display:flex; flex-direction:row;
-    align-items:center; gap:48px; }
-  .strip-frame { background:var(--white); padding:10px 10px 40px 10px;
-    box-shadow:0 4px 40px rgba(58,48,40,0.12); position:relative; }
-  .strip-photo { display:block; width:180px; height:180px; object-fit:cover;
-    display:block; margin-bottom:8px; filter:grayscale(100%); }
+    align-items:center; gap:40px; }
+  .double-strip-frame { background:var(--white); padding:10px;
+    box-shadow:0 4px 40px rgba(58,48,40,0.12); display:flex; flex-direction:row;
+    gap:0; position:relative; }
+  .single-strip { display:flex; flex-direction:column; padding:8px 8px 32px 8px; position:relative; }
+  .single-strip + .single-strip { border-left: 2px dashed #bbb; }
+  .cut-icon { position:absolute; top:50%; left:-13px; transform:translateY(-50%);
+    font-size:16px; background:var(--white); padding:2px 0; line-height:1; }
+  .strip-photo { display:block; width:130px; height:174px; object-fit:cover;
+    margin-bottom:6px; filter:grayscale(100%); }
   .strip-photo:last-of-type { margin-bottom:0; }
-  .strip-label { position:absolute; bottom:12px; left:0; right:0; text-align:center;
-    font-family:var(--font-display); font-size:14px; font-weight:300; font-style:italic;
-    color:var(--brown-mid); letter-spacing:1px; }
+  .strip-label { text-align:center; font-family:var(--font-display); font-size:11px;
+    font-weight:300; font-style:italic; color:var(--brown-mid); letter-spacing:1px;
+    margin-top:6px; white-space:nowrap; }
   .strip-actions { display:flex; flex-direction:column; gap:16px; align-items:flex-start; }
-  .strip-title { font-family:var(--font-display); font-size:36px; font-weight:300; color:var(--green); margin-bottom:8px; }
-  .strip-sub { font-size:13px; font-weight:200; color:var(--brown-mid); line-height:1.6; max-width:240px; margin-bottom:24px; }
+  .strip-title { font-family:var(--font-display); font-size:34px; font-weight:300; color:var(--green); margin-bottom:4px; }
+  .strip-sub { font-size:13px; font-weight:200; color:var(--brown-mid); line-height:1.6; max-width:220px; margin-bottom:24px; }
 
   /* ── THANKS ── */
   #screen-thanks { background:var(--cream); }
@@ -344,16 +349,28 @@
     <path d="M40,15 Q45,8 52,12 Q55,18 48,22 Q41,20 40,15Z" fill="#7a8f67"/>
   </svg>
   <div class="strip-content">
-    <div class="strip-frame">
-      <img class="strip-photo" id="strip-img-0" src="" alt="foto 1"/>
-      <img class="strip-photo" id="strip-img-1" src="" alt="foto 2"/>
-      <img class="strip-photo" id="strip-img-2" src="" alt="foto 3"/>
-      <div class="strip-label">João & Constança ✦ 2025</div>
+    <div class="double-strip-frame">
+      <!-- strip A -->
+      <div class="single-strip">
+        <img class="strip-photo" id="strip-img-0" src="" alt="foto 1"/>
+        <img class="strip-photo" id="strip-img-1" src="" alt="foto 2"/>
+        <img class="strip-photo" id="strip-img-2" src="" alt="foto 3"/>
+        <div class="strip-label">João & Constança ✦ 2025</div>
+      </div>
+      <!-- cut line -->
+      <div class="cut-icon">✂</div>
+      <!-- strip B (identical) -->
+      <div class="single-strip">
+        <img class="strip-photo" id="strip-img-3" src="" alt="foto 1"/>
+        <img class="strip-photo" id="strip-img-4" src="" alt="foto 2"/>
+        <img class="strip-photo" id="strip-img-5" src="" alt="foto 3"/>
+        <div class="strip-label">João & Constança ✦ 2025</div>
+      </div>
     </div>
     <div class="strip-actions">
       <div class="strip-title">A vossa strip!</div>
-      <div class="strip-sub">Toca em guardar para descarregar a strip como imagem.</div>
-      <button class="btn-main" onclick="downloadStrip()">Guardar strip</button>
+      <div class="strip-sub">Duas cópias — uma para guardar, outra para levar. Cortar na linha.</div>
+      <button class="btn-main" onclick="downloadStrip()">Guardar para imprimir</button>
       <button style="margin-top:8px; background:transparent; border:none; font-family:var(--font-body);
         font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--brown-light);
         cursor:pointer; padding:8px 0;" onclick="retakePhotos()">Repetir fotos</button>
@@ -565,23 +582,24 @@
     const vw = video.videoWidth || 1280;
     const vh = video.videoHeight || 720;
 
-    // crop to square from center for strip format
-    const size = Math.min(vw, vh);
-    const sx = (vw - size) / 2;
-    const sy = (vh - size) / 2;
+    // crop to 3:4 portrait from center of frame
+    const cropW = Math.floor(vh * 0.75); // 3:4 → width = height * 0.75
+    const cropH = vh;
+    const sx = Math.floor((vw - cropW) / 2);
+    const sy = 0;
 
     const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
+    canvas.width = cropW;
+    canvas.height = cropH;
     const ctx = canvas.getContext('2d');
 
     // mirror to match what user sees
-    ctx.translate(size, 0);
+    ctx.translate(cropW, 0);
     ctx.scale(-1, 1);
-    ctx.drawImage(video, sx, sy, size, size, 0, 0, size, size);
+    ctx.drawImage(video, sx, sy, cropW, cropH, 0, 0, cropW, cropH);
 
     // convert to black & white
-    const imageData = ctx.getImageData(0, 0, size, size);
+    const imageData = ctx.getImageData(0, 0, cropW, cropH);
     const data = imageData.data;
     for (let i = 0; i < data.length; i += 4) {
       const gray = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114;
@@ -614,61 +632,134 @@
   function showStripPreview() {
     for (let i = 0; i < 3; i++) {
       document.getElementById('strip-img-' + i).src = photoCaptures[i];
+      document.getElementById('strip-img-' + (i + 3)).src = photoCaptures[i];
     }
     goTo('strip');
   }
 
   function downloadStrip() {
-    const PHOTO_W = 600;
-    const PHOTO_H = 600;
-    const PAD = 30;
-    const GAP = 16;
-    const BOTTOM = 80;
-    const STRIP_W = PHOTO_W + PAD * 2;
-    const STRIP_H = PHOTO_H * 3 + GAP * 2 + PAD * 2 + BOTTOM;
+    // Selphy CP1500: 10×15cm portrait at 300dpi = 1200×1800px
+    // Two strips side by side → landscape canvas: 1800×1200 but each strip is portrait
+    // Actually: we want the PRINT to be portrait 10×15cm = 1200w × 1800h
+    // But we need TWO strips side by side — so canvas is wide: 2400×1800
+    // Each strip = 1200px wide × 1800px tall, side by side with cut zone
+    const STRIP_W = 1100;
+    const STRIP_H = 1800;
+    const CUT_ZONE = 80;
+    const CANVAS_W = STRIP_W * 2 + CUT_ZONE;
+    const CANVAS_H = STRIP_H;
+    const PAD = 40;
+    const LABEL_H = 80;
+    const PHOTO_GAP = 8;
+    // 3 portrait photos stacked — height fills available space
+    const PHOTO_H = Math.floor((STRIP_H - PAD * 2 - LABEL_H - PHOTO_GAP * 2) / 3);
+    // width = 3:4 portrait ratio → width = height * 0.75
+    const PHOTO_W = Math.round(PHOTO_H * 0.75);
+    const PHOTO_X_PAD = Math.floor((STRIP_W - PHOTO_W) / 2); // center horizontally
 
     const canvas = document.getElementById('strip-canvas');
-    canvas.width = STRIP_W;
-    canvas.height = STRIP_H;
+    canvas.width = CANVAS_W;
+    canvas.height = CANVAS_H;
     const ctx = canvas.getContext('2d');
 
-    // background
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, STRIP_W, STRIP_H);
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-    // subtle border
     ctx.strokeStyle = '#e0ddd8';
     ctx.lineWidth = 2;
-    ctx.strokeRect(1, 1, STRIP_W - 2, STRIP_H - 2);
+    ctx.strokeRect(1, 1, CANVAS_W - 2, CANVAS_H - 2);
 
-    let loadedCount = 0;
+    // dashed cut line
+    const cutX = STRIP_W + CUT_ZONE / 2;
+    ctx.save();
+    ctx.setLineDash([10, 7]);
+    ctx.strokeStyle = '#bbbbbb';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cutX, PAD);
+    ctx.lineTo(cutX, CANVAS_H - PAD);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.font = '28px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✂', cutX, PAD + 20);
+    ctx.save();
+    ctx.translate(cutX, CANVAS_H - PAD - 10);
+    ctx.rotate(Math.PI);
+    ctx.fillText('✂', 0, 0);
+    ctx.restore();
+
+    // preload images then draw both strips
+    const imgs = [];
+    let preloaded = 0;
     for (let i = 0; i < 3; i++) {
       const img = new Image();
       img.onload = () => {
-        const y = PAD + i * (PHOTO_H + GAP);
-        ctx.drawImage(img, PAD, y, PHOTO_W, PHOTO_H);
-        loadedCount++;
-        if (loadedCount === 3) {
-          // label at bottom
+        imgs[i] = img;
+        preloaded++;
+        if (preloaded < 3) return;
+
+        const drawCover = (img, dx, dy, dw, dh) => {
+          // force 3:4 portrait crop from center of source image
+          const targetAR = dw / dh; // e.g. ~0.75 for portrait slot
+          const srcW = img.naturalWidth;
+          const srcH = img.naturalHeight;
+          let sx, sy, sw, sh;
+          if (srcW / srcH > targetAR) {
+            // source is wider than target — crop sides
+            sh = srcH;
+            sw = Math.round(sh * targetAR);
+            sx = Math.round((srcW - sw) / 2);
+            sy = 0;
+          } else {
+            // source is taller than target — crop top/bottom
+            sw = srcW;
+            sh = Math.round(sw / targetAR);
+            sx = 0;
+            sy = Math.round((srcH - sh) / 2);
+          }
+          ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+        };
+
+        const drawOneStrip = (xStart) => {
+          for (let j = 0; j < 3; j++) {
+            const x = xStart + PHOTO_X_PAD;
+            const y = PAD + j * (PHOTO_H + PHOTO_GAP);
+            drawCover(imgs[j], x, y, PHOTO_W, PHOTO_H);
+            // B&W conversion
+            const id = ctx.getImageData(x, y, PHOTO_W, PHOTO_H);
+            const d = id.data;
+            for (let p = 0; p < d.length; p += 4) {
+              const g = d[p] * 0.299 + d[p+1] * 0.587 + d[p+2] * 0.114;
+              d[p] = d[p+1] = d[p+2] = g;
+            }
+            ctx.putImageData(id, x, y);
+          }
+          // label
           ctx.fillStyle = '#6b5d50';
-          ctx.font = '300 26px "Cormorant Garamond", serif';
+          ctx.font = 'italic 300 32px "Cormorant Garamond", Georgia, serif';
           ctx.textAlign = 'center';
-          ctx.fillText('João & Constança  ✦  2025', STRIP_W / 2, STRIP_H - 28);
+          ctx.fillText('João & Constança  ✦  2025', xStart + STRIP_W / 2, CANVAS_H - 24);
+        };
 
-          // download
-          const now = new Date();
-          const ts = `${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}`;
-          canvas.toBlob(blob => {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = `joao-constanca-strip-${ts}.jpg`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(url), 5000);
-          }, 'image/jpeg', 0.95);
+        drawOneStrip(0);
+        drawOneStrip(STRIP_W + CUT_ZONE);
 
-          document.getElementById('thanks-sub').textContent = 'A vossa strip ficou lindíssima! O João e a Constança vão adorar.';
-          showThanks();
-        }
+        // download
+        const now = new Date();
+        const ts = `${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}`;
+        canvas.toBlob(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `joao-constanca-strip-${ts}.jpg`;
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 5000);
+        }, 'image/jpeg', 0.96);
+
+        document.getElementById('thanks-sub').textContent = 'A vossa strip ficou lindíssima! O João e a Constança vão adorar.';
+        showThanks();
       };
       img.src = photoCaptures[i];
     }
