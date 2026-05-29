@@ -1187,10 +1187,15 @@
   }
 
   function processBoomFrames() {
-    // One forward+reverse cycle (~3s at 20fps). Saved video loops naturally
-    // when shared on iOS Photos / Instagram Stories, so repetition isn't needed.
+    // Forward + reverse = one cycle; repeat until the saved video is at least 10s.
     // boomFrames is already an array of ImageBitmaps — no async loading required.
-    boomAllFrames = [...boomFrames, ...[...boomFrames].reverse()];
+    const cycle = [...boomFrames, ...[...boomFrames].reverse()];
+    const FPS = 20;
+    const minFrames = 10 * FPS; // 200 frames = 10s @ 20fps
+    boomAllFrames = [];
+    while (boomAllFrames.length < minFrames) {
+      boomAllFrames.push(...cycle);
+    }
     showBoomPreview();
   }
 
